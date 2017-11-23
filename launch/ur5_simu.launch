@@ -1,0 +1,9 @@
+<launch>
+
+  <include file="$(find tams_ur5_setup_moveit_config)/launch/demo.launch"/>
+
+  <node name="ur5move" pkg="ur5_ass" type="ur5move" respawn="false" output="screen"/>
+
+
+</launch>
+

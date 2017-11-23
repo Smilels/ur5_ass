@@ -1,0 +1,9 @@
+   从pcd文件用（rosrun pcl_ros pcd_to_pointcloud '/informatik2/tams/home/sli/pcl/build/asymmetry.pcd' _frame_id:=/table
+）转成在table_top坐标下的std_msgs/pointcloud（也许需要计算点云中心，把点云中心坐标转换成table_top）.
+  把model PCLPointCloud2点云转换为xyz格式。
+  确定xyz点云的坐标是table_top。
+  执行icp，得到transform。
+
+  pcl_conversions::toPCL(*cloud,pcl_pc2);
+  pcl::PCLHeader 	toPCL (const std_msgs::Header &header)
+  pcl_conversions::::toPCL()

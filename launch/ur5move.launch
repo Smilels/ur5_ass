@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find tams_ur5_setup_bringup)/launch/tams_ur5_setup.launch"/>
+
+  <node name="ur5move" pkg="ur5_ass" type="ur5move" respawn="false" output="screen"/>
+
+</launch>
