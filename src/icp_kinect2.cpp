@@ -31,6 +31,7 @@ private:
   tf::TransformListener *tf_listener;
   ros::Publisher pub1;
   ros::Publisher pub2;
+  ros::Publisher pub3;
 
 public:
   ICPregister(){
@@ -40,10 +41,12 @@ public:
   tf_listener = new tf::TransformListener;
   pub1= nh.advertise<point_cloud> ("pointcloud1", 1);
   pub2= nh.advertise<point_cloud> ("pointcloud2", 1);
+  pub2= nh.advertise<point_cloud> ("pointcloud3", 1);
 }
   void pointCloudCb(const point_cloud::ConstPtr& cloud_in){
   point_cloud::Ptr cloud_tf (new point_cloud);
   point_cloud::Ptr cloud_filtered (new point_cloud);
+  point_cloud::Ptr cloud_model (new point_cloud);
   std_msgs::Header header = pcl_conversions::fromPCL(cloud_in->header);
   visualization_msgs::Marker cylinder;
   cylinder.ns = "object";
@@ -90,6 +93,7 @@ public:
   extractor.setIndices(objectIndices);
   point_cloud::Ptr objectCloud(new point_cloud);
   extractor.filter(*objectCloud);//object point cloud
+  pub1.publish(objectCloud);
 
   point_cloud::Ptr cloud_target(new point_cloud);
   pcl::PCDReader reader;
@@ -100,7 +104,7 @@ public:
   Eigen::Vector4f max_pt;
   pcl::getMinMax3D (*cloud_target, min_pt, max_pt);
   Eigen::Vector4f center = (max_pt - min_pt)/2 + min_pt;
-  pub1.publish(cloud_target);
+  pub2.publish(cloud_target);
 
   pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputCloud(objectCloud);
@@ -127,7 +131,10 @@ public:
   transform.setRotation(tfqt);
   tf_pub->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "table_top", "/object_model"));
   //ROS_INFO_STREAM("tfqt.x"<<transform.getRotation ());
-  //std::cout << tfqt(0,1) << std::endl;
+  //std::cout << tfqt(0,1) << std::endl;+
+  cloud_model=cloud_target;
+  cloud_model->header.frame_id="/object_model";
+  pub3.publish(cloud_model);
 
   cylinder.pose.orientation=geoqt;
   cylinder.scale.x = 0.049;
