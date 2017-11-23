@@ -20,8 +20,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 
-typedef pcl::PointCloud<pcl::PointXYZ> point_cloud;
-typedef pcl::PointXYZ Point;
+typedef pcl::PointCloud<pcl::PointXYZRGB> point_cloud;
+typedef pcl::PointXYZRGB Point;
 class ICPregister{
 private:
   ros::NodeHandle nh;
@@ -41,7 +41,7 @@ public:
   tf_listener = new tf::TransformListener;
   pub1= nh.advertise<point_cloud> ("pointcloud1", 1);
   pub2= nh.advertise<point_cloud> ("pointcloud2", 1);
-  pub2= nh.advertise<point_cloud> ("pointcloud3", 1);
+  pub3= nh.advertise<point_cloud> ("pointcloud3", 1);
 }
   void pointCloudCb(const point_cloud::ConstPtr& cloud_in){
   point_cloud::Ptr cloud_tf (new point_cloud);
@@ -97,19 +97,20 @@ public:
 
   point_cloud::Ptr cloud_target(new point_cloud);
   pcl::PCDReader reader;
-  reader.read ("/homeL/demo/ws_ur/src/ur5_ass/src/cylinder4.pcd", *cloud_target);
+  reader.read ("/homeL/demo/ls_ws/src/ur5_ass/src/pcd/cylinder4.pcd", *cloud_target);
   std::cout << "PointCloud before filtering has: " << cloud_target->points.size () << " data points." << std::endl;
   cloud_target->header.frame_id="table_top";
   Eigen::Vector4f min_pt;
   Eigen::Vector4f max_pt;
   pcl::getMinMax3D (*cloud_target, min_pt, max_pt);
   Eigen::Vector4f center = (max_pt - min_pt)/2 + min_pt;
+  Eigen::Vector4f shape=max_pt - min_pt;
   pub2.publish(cloud_target);
 
-  pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+  pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
   icp.setInputCloud(objectCloud);
   icp.setInputTarget(cloud_target);
-  pcl::PointCloud<pcl::PointXYZ> Final;
+  point_cloud Final;
   icp.align(Final);
   std::cout << icp.getFinalTransformation() << std::endl;
   Eigen::Matrix4f Tm;
@@ -136,13 +137,14 @@ public:
   cloud_model->header.frame_id="/object_model";
   pub3.publish(cloud_model);
 
+  cylinder.header.frame_id = "object_model";
   cylinder.pose.orientation=geoqt;
-  cylinder.scale.x = 0.049;
-  cylinder.scale.y = 0.049;
-  cylinder.scale.z = Tm(2,3);
-  cylinder.pose.position.x = Tm(0,3)+center[0];
-  cylinder.pose.position.y = Tm(1,3)+center[1];
-  cylinder.pose.position.z = Tm(2,3)/2+center[2];
+  cylinder.scale.x = shape[0];
+  cylinder.scale.y = shape[1];
+  cylinder.scale.z = shape[2];
+  cylinder.pose.position.x = Tm(0,3)-center[0];
+  cylinder.pose.position.y = Tm(1,3)-center[1];
+  cylinder.pose.position.z = Tm(2,3)/2-center[2];
   cylinder.action = visualization_msgs::Marker::ADD;
   marker_pub.publish(cylinder);
   }
