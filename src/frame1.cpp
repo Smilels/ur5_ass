@@ -27,7 +27,7 @@ int main (int argc, char** argv)
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_tf (new pcl::PointCloud<pcl::PointXYZ>);
   //sensor_msgs::PointCloud2 pc;
-  reader.read ("/homeL/demo/ws_ur/src/ur5_ass/src/cylinder4.pcd", *cloud);
+  reader.read ("/homeL/demo/ws_ur/src/ur5_ass/src/pcd/cylinder4.pcd", *cloud);
   std::cout << "PointCloud before filtering has: " << cloud->points.size () << " data points." << std::endl;
 
   Eigen::Matrix4f Tm;

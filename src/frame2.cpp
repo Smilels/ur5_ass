@@ -1,6 +1,7 @@
 #include<ros/ros.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
+#include <visualization_msgs/Marker.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -22,6 +23,7 @@ int main (int argc, char** argv)
   tf_pub2 = new tf::TransformBroadcaster;
   ros::Publisher pub1= nh.advertise<pcl::PointCloud<pcl::PointXYZ>> ("pointcloud1", 1);
   ros::Publisher pub2= nh.advertise<pcl::PointCloud<pcl::PointXYZ>> ("pointcloud2", 1);
+  ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 10);
   pcl::PCDReader reader;
   //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>), cloud_tf (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
@@ -64,6 +66,27 @@ int main (int argc, char** argv)
   //cloud_tf=cloud;
   //cloud_tf->header.frame_id="/object_model";
   pub2.publish(cloud_tf);
+  Eigen::Vector4f min_pt;
+  Eigen::Vector4f max_pt;
+  pcl::getMinMax3D (*cloud_tf, min_pt, max_pt);
+  Eigen::Vector4f center = (max_pt - min_pt)/2 + min_pt;
+  Eigen::Vector4f shape=max_pt - min_pt;
+  visualization_msgs::Marker cylinder;
+  cylinder.ns = "object";
+  //cylinder.header.frame_id = "/table_top";
+  cylinder.type = visualization_msgs::Marker::CYLINDER;
+  cylinder.color.g = 1.0f;
+  cylinder.color.a = 1.0;
+  cylinder.header.frame_id = "object_model";
+  cylinder.pose.orientation.w=1;
+  cylinder.scale.x = shape[0];
+  cylinder.scale.y = shape[1];
+  cylinder.scale.z = shape[2];
+  cylinder.pose.position.x = center[0];
+  cylinder.pose.position.y = center[1];
+  cylinder.pose.position.z = center[2];
+  cylinder.action = visualization_msgs::Marker::ADD;
+  marker_pub.publish(cylinder);
   }
 
   return (0);

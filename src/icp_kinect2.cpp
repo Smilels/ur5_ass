@@ -14,6 +14,7 @@
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
+#include <ur5_ass/ObjectPose.h>
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
@@ -32,6 +33,7 @@ private:
   ros::Publisher pub1;
   ros::Publisher pub2;
   ros::Publisher pub3;
+  ros::Publisher object_pose_pub;
 
 public:
   ICPregister(){
@@ -42,6 +44,7 @@ public:
   pub1= nh.advertise<point_cloud> ("pointcloud1", 1);
   pub2= nh.advertise<point_cloud> ("pointcloud2", 1);
   pub3= nh.advertise<point_cloud> ("pointcloud3", 1);
+  object_pose_pub=nh.advertise<ur5_ass::ObjectPose> ("Tower/ObjectPose", 1);
 }
   void pointCloudCb(const point_cloud::ConstPtr& cloud_in){
   point_cloud::Ptr cloud_tf (new point_cloud);
@@ -137,16 +140,43 @@ public:
   cloud_model->header.frame_id="/object_model";
   pub3.publish(cloud_model);
 
-  cylinder.header.frame_id = "object_model";
-  cylinder.pose.orientation=geoqt;
+  // tf::StampedTransform transform_center;
+  // tf::Vector3 object_center;
+  // object_center.setValue(tf::Vector3(center[0], center[1], center[2]);
+  // transform.setOrigin(object_center);
+  // transform_center.setRotation( tf::Quaternion(0, 0, 0, 1) );
+  // tf_pub->sendTransform(tf::StampedTransform(transform_center, ros::Time::now(), "object_model", "/object_model_center"));
+  // // tf::Transform transform_center;
+  // // try{
+  // //     tf_listener->waitForTransform("/table_top", "/object_model_center", ros::Duration(5.0));
+  // //     tf_listener->lookupTransform ("/table_top", "/object_model_center", transform_center);
+  // // }
+  // // catch(std::runtime_error &e){
+  // //     return;
+  // // }
+
+  tf::StampedTransform transform_final;
+
+  cylinder.header.frame_id = "/object_model";
+  cylinder.pose.orientation.w=1;
   cylinder.scale.x = shape[0];
   cylinder.scale.y = shape[1];
   cylinder.scale.z = shape[2];
-  cylinder.pose.position.x = Tm(0,3)-center[0];
-  cylinder.pose.position.y = Tm(1,3)-center[1];
-  cylinder.pose.position.z = Tm(2,3)/2-center[2];
+  cylinder.pose.position.x = center[0];
+  cylinder.pose.position.y = center[1];
+  cylinder.pose.position.z = center[2];
   cylinder.action = visualization_msgs::Marker::ADD;
   marker_pub.publish(cylinder);
+  ur5_ass::ObjectPose Object_Pose;
+  geometry_msgs::PoseStamped object_pose;
+  object_pose.header.frame_id="/object_model";
+  object_pose.pose.position.x=center[0];
+  object_pose.pose.position.y=center[1];
+  object_pose.pose.position.z=center[2];
+  object_pose.pose.orientation.w=1;
+  Object_Pose.object_poses.push_back(object_pose);
+
+  object_pose_pub.publish(Object_Pose);
   }
 };
 
